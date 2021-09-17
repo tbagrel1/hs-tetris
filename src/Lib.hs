@@ -1,22 +1,23 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-module Lib
-    ( initialWorld
-    , handleEvent
-    , advanceWorld
-    , World
-    ) where
+module Lib where
 
-import Graphics.Gloss.Interface.Pure.Game
-import Data.Array
+import Graphics.Gloss.Interface.IO.Game hiding (Vector)
+import Data.Vector (Vector, (!), (//))
+import qualified Data.Vector as V
 import Data.Ratio ((%))
 import System.Random.Shuffle
 import Data.Foldable (asum)
-import Data.Maybe (isNothing, fromMaybe)
-import Data.List ((\\))
+import Data.Maybe (isNothing, fromMaybe, isJust)
+import Data.List ((\\), groupBy)
+
+(!!!) :: Grid -> GridPoint -> Maybe PieceType
+grid !!! (x, y) = grid ! y ! x
+infixl 9 !!!  -- same as ! for Data.Vector
+
 
 rowNb :: Int
-rowNb = 24
+rowNb = 20
 
 colNb :: Int
 colNb = 10
@@ -54,7 +55,7 @@ isInGridOrAbove :: GridPoint -> Bool
 isInGridOrAbove (x, y) = x >= 0 && x < colNb && y >= 0
 
 isValid :: Grid -> MovingPiece -> Bool
-isValid grid piece = all (\gridPoint -> isInGridOrAbove gridPoint && isFree (grid ! gridPoint)) $ gridPoints piece
+isValid grid piece = all (\gridPoint -> isInGridOrAbove gridPoint && isNothing (grid !!! gridPoint)) $ gridPoints piece
 
 gridPoints :: MovingPiece -> [GridPoint]
 gridPoints MovingPiece { pieceType, orientation, center } = fmap (toGridPoint . addPoint center) (relGridPoints pieceType orientation)
@@ -65,13 +66,14 @@ applyAngle orientation = fmap (applyAngle' orientation) where
         | orientation == S0 = (x, y)
         | orientation == S1 = (y, -x)
         | orientation == S2 = (-x, -y)
-        | orientation == S3 = (-y, x)
+        | otherwise = (-y, x)
 
 data Orientation
     = S0
     | S1
     | S2
     | S3
+    deriving Eq
 
 data MoveType
     = RotateLeft
@@ -100,7 +102,7 @@ nextOrientationAndTranslations moveType orientation pieceType = case (moveType, 
     (MoveDown, _) -> (orientation, [(0, -1)])
     (MoveLeft, _) -> (orientation, [(-1, 0)])
     (MoveRight, _) -> (orientation, [(1, 0)])
-    (FullDrop, _) -> (orientation, fmap (\x -> (0, x)) [(-(toRational rowNb))..0])
+    (FullDrop, _) -> (orientation, fmap (\y -> (0, y)) [(-(toRational rowNb))..0])
 
 filterMaybe :: (a -> Bool) -> [a] -> [Maybe a]
 filterMaybe predicate = fmap (\v -> if predicate v then Just v else Nothing)
@@ -127,6 +129,7 @@ data PieceType
     | S
     | T
     | Z
+    deriving Show
 
 type KeyMapping = Key -> Maybe MoveType
 
@@ -162,20 +165,22 @@ generatePieceBag = do
     indices <- shuffleM [0..6]
     return $ fmap pieceTypeFromIndex indices
 
-type Grid = Array (Int, Int) (Maybe PieceType)
+type Grid = Vector (Vector (Maybe PieceType))
 
 data World = World
     { grid :: Grid
     , movingPiece :: MovingPiece
     , keyMapping :: KeyMapping
     , pieceBag :: [PieceType]
-    , score :: Double
-    , interestRate :: Double
     , linesToDelete :: [Int]
+    , dropTickInterval :: Integer
+    , tickNo :: Integer
+    , tickNextDrop :: Integer
+    , finished :: Bool
     }
 
-initialWorld :: World
-initialWorld = World
+--initialWorld :: World
+--initialWorld = World
 
 handleEvent :: Event -> World -> IO World
 handleEvent (EventKey key Down _ _) world@World { grid, movingPiece, keyMapping } = return $ case keyMapping key >>= next grid movingPiece of
@@ -183,20 +188,49 @@ handleEvent (EventKey key Down _ _) world@World { grid, movingPiece, keyMapping 
     Nothing -> world
 handleEvent _ world = return world
 
+getFullLines :: Grid -> [Int]
+getFullLines grid = fmap fst $ filter snd $ [(y, all (\x -> isJust (grid !!! (x, y))) [0..(colNb-1)]) | y <- [0..(rowNb - 1)]]
+
+indexFilter :: (Int -> Bool) -> [a] -> [a]
+indexFilter indexPred xs = fmap snd $ filter (\(i, _) -> indexPred i) $ zip [0..] xs
+
+deleteLines :: Grid -> [Int] -> Grid
+deleteLines grid linesToDelete = V.fromList $ filteredLines ++ newLines where
+    newLines = replicate n $ V.replicate colNb Nothing
+    filteredLines = indexFilter (`notElem` linesToDelete) $ V.toList grid
+    n = length linesToDelete
+
+-- check valid only when a piece is just spawned
+isFinished :: Grid -> MovingPiece -> Bool
+isFinished grid newMovingPiece = any (\gridPoint -> isJust $ grid !!! gridPoint) $ gridPoints newMovingPiece
+
 advanceWorld :: Float -> World -> IO World
 advanceWorld _ world = return world
 
--- increase score by score * interest
+ticksPerSecond :: Int
+ticksPerSecond = 30
+
+updateGrid :: Grid -> [(GridPoint, Maybe PieceType)] -> Grid
+updateGrid grid updates = grid // newLines where
+    newLines = fmap getINewLine groupedUpdates
+    groupedUpdates = groupBy (\((_, y1), _) -> \((_, y2), _) -> y1 == y2) updates
+    getINewLine lineUpdates = (y, (grid ! y) // xs) where
+        y = snd . fst . head $ lineUpdates
+        xs = fmap (\((x, _), v) -> (x, v)) lineUpdates
+
+solidifyPiece :: Grid -> MovingPiece -> Grid
+solidifyPiece grid movingPiece@MovingPiece { pieceType } = updateGrid grid [((x, y), Just pieceType) | (x, y) <- gridPoints movingPiece]
+
 -- if lines are marked for deletion, delete them, move grid to the bottom, then empty the list
 -- if tick is the gravity tick, then move down if possible
 -- if down:
 --   + solidify the piece in the grid
---   + if end of game:
---       end of game
 --   + else:
 --       + get a new piece from the bag, and regenerate the bag if necessary
+    --   + if end of game:
+    --       end of game
 --       + increase  interest
 --       + check if lines are complete
 --         if lines are complete:
---             + mark lines for deletion (both on screen,
+--             + mark lines for deletion
 --             + increase score

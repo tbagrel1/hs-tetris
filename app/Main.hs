@@ -5,7 +5,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Game
 
 main :: IO ()
-main = playIO displayMode backgroundColor stepsPerSecond initialWorld render handleEvent advanceWorld
+main = putStrLn "hello" --playIO displayMode backgroundColor stepsPerSecond initialWorld render handleEvent advanceWorld
 
 displayMode :: Display
 displayMode = InWindow "Tetris" (200, 200) (10, 10)
@@ -17,4 +17,9 @@ stepsPerSecond :: Int
 stepsPerSecond = 1
 
 render :: World -> IO Picture
-render _ = circle 80
+render _ = return $ circle 80
+
+-- Grid
+-- Piece
+-- Lignes marquées pour suppression
+-- pièce fantome
