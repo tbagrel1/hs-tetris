@@ -25,7 +25,13 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Coords
+      Game
+      Grid
+      Pieces
+      Render
+      Utils
+      World
   other-modules:
       Paths_tetris
   hs-source-dirs:
