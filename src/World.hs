@@ -93,10 +93,8 @@ solidifyAndNewMovingPiece world@World { grid, pieceBag, movingPiece } = do
 
 --   + 3.2 check end of game:
 updateFinished :: World -> IO World
-updateFinished world@World { grid, movingPiece, finished } = do
-    putStrLn $ "world: " ++ show world
-    return world { finished = finished || isFinished grid movingPiece } where
-        isFinished grid newMovingPiece = any (\gridPoint -> isJust $ grid !!! gridPoint) $ selfRepr newMovingPiece
+updateFinished world@World { grid, movingPiece, finished } = return world { finished = finished || isFinished grid movingPiece } where
+    isFinished grid newMovingPiece = any (\gridPoint -> isJust $ grid !!! gridPoint) $ selfRepr newMovingPiece
 
 --   + 3.3 check if lines are complete
 --         if lines are complete:
