@@ -10,8 +10,9 @@ module Grid
 
 import Coords
 import Utils (indexFilter)
-import Data.Vector (Vector, (!), (//))
+
 import qualified Data.Vector as V
+import Data.Vector (Vector, (!), (//))
 import Data.Maybe (isJust)
 
 type Grid a = Vector (Vector a)

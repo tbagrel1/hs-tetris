@@ -13,6 +13,7 @@ import Grid
 import Pieces
 import Game
 import World
+
 import Graphics.Gloss.Data.Color
 import Graphics.Gloss.Interface.IO.Game
 import Data.Maybe (fromMaybe)
@@ -76,4 +77,4 @@ getColorGrid world@World { grid, movingPiece = movingPiece@MovingPiece { pieceTy
 
 renderWorld :: World -> IO Picture
 renderWorld world@World { finished, linesCleared } = return $ if finished then Text ("End of game.\nYou cleared " ++ show linesCleared ++ "lines!") else putInCenter $ Pictures $ lMapGrid gridSquareWithColor$ getColorGrid world where
-    putInCenter = translate (-fromIntegral colNb * squareSize / 2) (-fromIntegral rowNb * squareSize / 2)
+    putInCenter = translate (-fromIntegral colNb * squareSize / 2) (-fromIntegral (rowNb + 2) * squareSize / 2)

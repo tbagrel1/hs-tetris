@@ -42,5 +42,6 @@
     <orderEntry type="library" name="primitive-0.7.2.0" level="project" />
     <orderEntry type="library" name="transformers-compat-0.6.6" level="project" />
     <orderEntry type="library" name="splitmix-0.1.0.3" level="project" />
+    <orderEntry type="library" name="vector-0.12.3.0" level="project" />
   </component>
 </module>

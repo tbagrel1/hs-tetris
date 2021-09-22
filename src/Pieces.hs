@@ -16,9 +16,10 @@ module Pieces
 import Grid
 import Coords
 import Game
+import Utils (lastMaybe, headMaybe)
+
 import Data.Ratio ((%))
 import Data.Maybe (isNothing, fromMaybe)
-import Utils (lastMaybe, headMaybe)
 import System.Random.Shuffle (shuffleM)
 
 type PieceGrid = Grid (Maybe PieceType)

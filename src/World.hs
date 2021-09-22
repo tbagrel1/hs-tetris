@@ -10,6 +10,7 @@ module World
 import Pieces
 import Grid
 import Game
+
 import qualified Data.Vector as V
 import Graphics.Gloss.Interface.IO.Game
 import Control.Monad ((>=>))
