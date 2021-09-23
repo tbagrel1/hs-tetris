@@ -1,8 +1,8 @@
 module Main where
 
 import Game
-  ( ticksPerSecond,
-    defaultKeyMapping,
+  ( defaultKeyMapping,
+    ticksPerSecond,
   )
 import Graphics.Gloss.Interface.IO.Game
   ( Display (..),
@@ -18,11 +18,10 @@ import Render
 import World
   ( makeInitialWorld,
     updateWorldWithEvent,
-    updateWorldWithTick
+    updateWorldWithTick,
   )
 
-{- | Creates a new initial world then run the game
--}
+-- | Creates a new initial world then run the game
 main :: IO ()
 main = do
   initialWorld <- makeInitialWorld defaultKeyMapping
