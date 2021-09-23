@@ -41,8 +41,8 @@ jobs:
     - name: 🔨📘 Build Documentation and get code coverage
       if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: |
-        stack build
-        stack --no-terminal test --haddock --no-haddock-deps --coverage
+        stack --no-terminal test --coverage
+        stack --no-terminal test --haddock --no-haddock-deps
         mkdir -p public && mv $(stack path --local-install-root)/doc/* public
         mv $(stack path --local-install-root)/hpc public/hpc
         sed -i 's#</div></div><div id="footer">#<p class="caption">Code coverage</p><ul><li><span class="module"><span class="noexpander">\&nbsp;</span><a href="./hpc/index.html">See coverage report here</a></span><span class="package">hs-tetris-0.1.0.0</span></li></ul></div></div><div id="footer"></div>#' public/index.html
