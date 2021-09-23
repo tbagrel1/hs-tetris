@@ -1,0 +1,13 @@
+{
+    "workbench.colorTheme": "Monokai",
+    "cSpell.ignoreWords": [
+        "fmap"
+    ],
+    "cSpell.language": "en,fr-FR,fr",
+    "cSpell.words": [
+        "foldl",
+        "Repr",
+        "Tetris",
+        "tetromino"
+    ]
+}

@@ -1,80 +1,160 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
+{- |
+Module : Render
+Description : Rendering functions for TETRIS
+Copyright : (c) Thomas BAGREL @ TWEAG, 2021
+License : AGPL-3.0
+Maintainer : Thomas BAGREL <thomas.bagrel@tweag.io>
+Stability : experimental
+-}
 module Render
-    ( backgroundColor
-    , gridWidth
-    , gridHeight
-    , withMargin
-    , renderWorld
-    ) where
+  ( backgroundColor,
+    gridWidth,
+    gridHeight,
+    withMargin,
+    renderWorld,
+  )
+where
 
 import Coords
-import Grid
-import Pieces
+  ( IntCoord,
+  )
 import Game
+  ( colNb,
+    totalRowNb,
+  )
+import Grid
+  ( Grid,
+    lMapGrid,
+    mapGrid,
+    update,
+  )
+import Pieces
+  ( MovingPiece (..),
+    PieceType (..),
+    ghostRepr,
+    selfRepr,
+  )
 import World
-
-import Graphics.Gloss.Data.Color
+  ( World (..),
+  )
 import Graphics.Gloss.Interface.IO.Game
-import Data.Maybe (fromMaybe)
+  ( Color,
+    Picture (..),
+    black,
+    makeColorI,
+    mixColors,
+    translate,
+    white,
+  )
+import Data.Maybe
+  ( fromMaybe,
+  )
 
+{- | Type alias for a grid composed of colored squares.
+-}
 type ColorGrid = Grid Color
 
+{- | Size of the margin around the grid, in pixels.
+-}
 margin :: Int
 margin = 40
 
+{- | Square size, in pixels.
+-}
 squareSize :: Float
 squareSize = 35
 
+{- | Square border width, in pixels.
+-}
 borderSize :: Float
 borderSize = 2
 
+{- | Square border color
+-}
 borderColor :: Color
 borderColor = black
 
-fullLineColor :: Color
-fullLineColor = makeColorI 219 193 195 255
+{- | Color in which to render full rows, just before they are deleted.
+-}
+fullRowColor :: Color
+fullRowColor = makeColorI 219 193 195 255
 
+{- | Background color of the window.
+-}
 backgroundColor :: Color
 backgroundColor = white
 
+{- | Color map for each tetromino.
+-}
 colorFromPieceType :: PieceType -> Color
-colorFromPieceType p
-    | p == I = makeColorI 23 205 255 255
-    | p == J = makeColorI 30 49 148 255
-    | p == L = makeColorI 255 128 0 255
-    | p == O = makeColorI 255 217 0 255
-    | p == S = makeColorI 12 173 42 255
-    | p == T = makeColorI 138 25 138 255
-    | otherwise = makeColorI 191 23 37 255
+colorFromPieceType p = case p of
+  I -> makeColorI 23 205 255 255
+  J -> makeColorI 30 49 148 255
+  L -> makeColorI 255 128 0 255
+  O -> makeColorI 255 217 0 255
+  S -> makeColorI 12 173 42 255
+  T -> makeColorI 138 25 138 255
+  Z -> makeColorI 191 23 37 255
 
-ghostColor :: Color -> Color
-ghostColor = mixColors 0.4 0.6 white
+{- | Generates the color for the piece "ghost" representation, based on the piece base color.
+-}
+ghostColor
+  :: Color -- ^ Base color of the piece
+  -> Color -- ^ Color of its ghost representation
+ghostColor = mixColors 0.4 0.6 backgroundColor
 
+{- | Grid width (without margin), in pixels
+-}
 gridWidth :: Int
 gridWidth = round $ squareSize * fromIntegral colNb
 
+{- | Grid height (without margin), in pixels
+-}
 gridHeight :: Int
-gridHeight = round $ squareSize * (fromIntegral rowNb + 2)
+gridHeight = round $ squareSize * fromIntegral totalRowNb
 
+{- | Adds grid margin size to a grid dimension.
+-}
 withMargin :: Int -> Int
 withMargin dim = dim + 2 * margin
 
-gridSquareWithColor:: IntCoord -> Color -> Picture
-gridSquareWithColor(xGrid, yGrid) color = Pictures [background, foreground] where
+{- | Creates the 'Picture' object representing a colored square at the correct window position
+from a grid coordinate and a color.
+-}
+gridSquareWithColor
+  :: IntCoord -- ^ Grid coordinates of this square
+  -> Color -- ^ Color in which to render the square
+  -> Picture -- ^ Resulting picture
+gridSquareWithColor (xGrid, yGrid) color = Pictures [background, foreground]
+  where
     background = Color borderColor $ Polygon [(x, y), (x, y + squareSize), (x + squareSize, y + squareSize), (x + squareSize, y)]
     foreground = Color color $ Polygon [(x + borderSize, y + borderSize), (x + borderSize, y + squareSize - borderSize), (x + squareSize - borderSize, y + squareSize - borderSize), (x + squareSize - borderSize, y + borderSize)]
     x = fromIntegral xGrid * squareSize
     y = fromIntegral yGrid * squareSize
 
+{- | Uses the piece grid, the rows marked for deletion and the moving piece of the specified 'World' object
+to create the resulting color grid.
+-}
 getColorGrid :: World -> ColorGrid
-getColorGrid world@World { grid, movingPiece = movingPiece@MovingPiece { pieceType }, linesToDelete } =
-    ((solidifiedColorGrid `update` linesToDeleteUpdate) `update` ghostUpdate) `update` movingUpdate where
-        solidifiedColorGrid = mapGrid (fromMaybe backgroundColor . fmap colorFromPieceType) grid
-        linesToDeleteUpdate = [((x, y), fullLineColor) | x <- [0..(colNb - 1)], y <- linesToDelete]
-        ghostUpdate = [((x, y), ghostColor $ colorFromPieceType pieceType) | (x, y) <- ghostRepr grid movingPiece]
-        movingUpdate = [((x, y), colorFromPieceType pieceType) | (x, y) <- selfRepr movingPiece]
+getColorGrid world@World {grid, movingPiece = movingPiece@MovingPiece {pieceType}, rowsToDelete} =
+  ((solidifiedColorGrid `update` rowsToDeleteUpdate) `update` ghostUpdate) `update` movingUpdate
+  where
+    solidifiedColorGrid = mapGrid (maybe backgroundColor colorFromPieceType) grid
+    rowsToDeleteUpdate = [((x, y), fullRowColor) | x <- [0 .. (colNb - 1)], y <- rowsToDelete]
+    ghostUpdate = [((x, y), ghostColor $ colorFromPieceType pieceType) | (x, y) <- ghostRepr grid movingPiece]
+    movingUpdate = [((x, y), colorFromPieceType pieceType) | (x, y) <- selfRepr movingPiece]
 
+{- | Get the graphical representation corresponding to the current game state.
+-}
 renderWorld :: World -> IO Picture
-renderWorld world@World { finished, linesCleared } = return $ if finished then Text ("End of game.\nYou cleared " ++ show linesCleared ++ "lines!") else putInCenter $ Pictures $ lMapGrid gridSquareWithColor$ getColorGrid world where
-    putInCenter = translate (-fromIntegral colNb * squareSize / 2) (-fromIntegral (rowNb + 2) * squareSize / 2)
+renderWorld world@World {finished, rowsCleared, paused} = return $
+  if finished
+    then Text ("End of game.\nYou cleared " ++ show rowsCleared ++ "rows!")
+    else putInCenter $ Pictures $ if paused
+      then worldRepr ++ [Text "Paused"]
+      else worldRepr
+  where
+    worldRepr = lMapGrid gridSquareWithColor $ getColorGrid world
+    putInCenter = translate (-fromIntegral colNb * squareSize / 2) (-fromIntegral totalRowNb * squareSize / 2)
