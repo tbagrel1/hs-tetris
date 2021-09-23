@@ -1,6 +1,6 @@
 # Changelog for hs-tetris
 
-## v0.1.0.0
+## v0.1.0
 
 + First working version of the game
 + Wall kicks
