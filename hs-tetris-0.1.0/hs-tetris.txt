@@ -5,7 +5,7 @@
 -- | Please see the README on GitHub at
 --   <a>https://github.com/tbagrel1/hs-tetris#readme</a>
 @package hs-tetris
-@version 0.1.0.0
+@version 0.1.0
 
 
 module Coords
