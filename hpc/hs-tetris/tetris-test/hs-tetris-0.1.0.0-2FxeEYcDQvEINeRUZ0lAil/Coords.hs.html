@@ -1,0 +1,62 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style type="text/css">
+span.lineno { color: white; background: #aaaaaa; border-right: solid white 12px }
+span.nottickedoff { background: yellow}
+span.istickedoff { background: white }
+span.tickonlyfalse { margin: -1px; border: 1px solid #f20913; background: #f20913 }
+span.tickonlytrue  { margin: -1px; border: 1px solid #60de51; background: #60de51 }
+span.funcount { font-size: small; color: orange; z-index: 2; position: absolute; right: 20 }
+span.decl { font-weight: bold }
+span.spaces    { background: white }
+</style>
+</head>
+<body>
+<pre>
+<span class="decl"><span class="nottickedoff">never executed</span> <span class="tickonlytrue">always true</span> <span class="tickonlyfalse">always false</span></span>
+</pre>
+<pre>
+<span class="lineno">    1 </span>-- |
+<span class="lineno">    2 </span>-- Module : Coords
+<span class="lineno">    3 </span>-- Description : Type aliases and functions to deal with coordinates (either integer or rational coordinates)
+<span class="lineno">    4 </span>-- Copyright : (c) Thomas BAGREL @ TWEAG, 2021
+<span class="lineno">    5 </span>-- License : AGPL-3.0
+<span class="lineno">    6 </span>-- Maintainer : Thomas BAGREL &lt;thomas.bagrel@tweag.io&gt;
+<span class="lineno">    7 </span>-- Stability : experimental
+<span class="lineno">    8 </span>module Coords
+<span class="lineno">    9 </span>  ( RatCoord,
+<span class="lineno">   10 </span>    IntCoord,
+<span class="lineno">   11 </span>    addCoord,
+<span class="lineno">   12 </span>    toIntCoord,
+<span class="lineno">   13 </span>  )
+<span class="lineno">   14 </span>where
+<span class="lineno">   15 </span>
+<span class="lineno">   16 </span>-- | Type alias for rational coordinates
+<span class="lineno">   17 </span>type RatCoord = (Rational, Rational)
+<span class="lineno">   18 </span>
+<span class="lineno">   19 </span>-- | Type alias for integer coordinates
+<span class="lineno">   20 </span>type IntCoord = (Int, Int)
+<span class="lineno">   21 </span>
+<span class="lineno">   22 </span>-- | Translates the first point using the second one as a movement vector.
+<span class="lineno">   23 </span>addCoord ::
+<span class="lineno">   24 </span>  Num a =&gt;
+<span class="lineno">   25 </span>  -- | First point
+<span class="lineno">   26 </span>  (a, a) -&gt;
+<span class="lineno">   27 </span>  -- | Second point
+<span class="lineno">   28 </span>  (a, a) -&gt;
+<span class="lineno">   29 </span>  -- | Result of the translation
+<span class="lineno">   30 </span>  (a, a)
+<span class="lineno">   31 </span><span class="decl"><span class="istickedoff">addCoord (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)</span>
+<span class="lineno">   32 </span><span class="spaces"></span><span class="istickedoff"></span>
+<span class="lineno">   33 </span><span class="spaces"></span><span class="istickedoff">-- | Rounds the point coordinates to the nearest integers to give a IntCoord</span></span>
+<span class="lineno">   34 </span>toIntCoord ::
+<span class="lineno">   35 </span>  -- | Rational coordinates to round
+<span class="lineno">   36 </span>  RatCoord -&gt;
+<span class="lineno">   37 </span>  -- | Result of the rounding
+<span class="lineno">   38 </span>  IntCoord
+<span class="lineno">   39 </span><span class="decl"><span class="nottickedoff">toIntCoord (x, y) = (round x, round y)</span></span>
+
+</pre>
+</body>
+</html>
