@@ -1,0 +1,72 @@
+on: [push, pull_request]
+
+jobs:
+  ormolu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: mrkkrp/ormolu-action@v3
+
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 💽 Install OS Packages
+      uses: mstksg/get-package@v1
+      with:
+        apt-get: libgmp-dev 
+
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2
+
+    - name: 🧰 Setup Stack
+      uses: mstksg/setup-stack@v1
+
+    - name: 💾 Cache Dependencies
+      id: cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: stack-config-${{ matrix.os }}-${{ hashFiles('stack.yaml') }}
+
+    - name: 🔨 Build & Test
+      run: |
+        stack --no-terminal test
+
+    - name: 🔨📘 Build Documentation and get code coverage
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        stack --no-terminal test --haddock --no-haddock-deps --coverage
+        mkdir -p public && mv $(stack path --local-install-root)/doc/* public
+        mv $(find $(stack path --local-install-root)/hpc -name hpc_index.html) public/coverage.html
+        sed -i 's#</div></div><div id="footer">#<p class="caption">Code coverage</p><ul><li><span class="module"><span class="noexpander">\&nbsp;</span><a href="./coverage.html">See coverage report here</a></span><span class="package">hs-tetris-0.1.0.0</span></li></ul></div></div><div id="footer"></div>#' public/index.html
+    - name: 📘 Publish Documentation
+      if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: public
+
+  release:
+    needs: [build]
+    if: ${{ startsWith(github.ref, 'refs/tags') }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v2
+
+    - name: 🚀 Release
+      uses: docker://antonyurchenko/git-release:latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DRAFT_RELEASE: "true"
+        PRE_RELEASE: "false"
+        CHANGELOG_FILE: "ChangeLog.md"
+        ALLOW_EMPTY_CHANGELOG: "false"
+        ALLOW_TAG_PREFIX: "true"

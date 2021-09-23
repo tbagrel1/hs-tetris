@@ -49,3 +49,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - hs-tetris
+    - hspec
+    - hspec-contrib
+    - QuickCheck
+    - HUnit
