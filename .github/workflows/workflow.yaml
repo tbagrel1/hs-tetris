@@ -41,10 +41,11 @@ jobs:
     - name: 🔨📘 Build Documentation and get code coverage
       if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: |
+        stack build
         stack --no-terminal test --haddock --no-haddock-deps --coverage
         mkdir -p public && mv $(stack path --local-install-root)/doc/* public
-        mv $(find $(stack path --local-install-root)/hpc -name hpc_index.html) public/coverage.html
-        sed -i 's#</div></div><div id="footer">#<p class="caption">Code coverage</p><ul><li><span class="module"><span class="noexpander">\&nbsp;</span><a href="./coverage.html">See coverage report here</a></span><span class="package">hs-tetris-0.1.0.0</span></li></ul></div></div><div id="footer"></div>#' public/index.html
+        mv $(stack path --local-install-root)/hpc public/hpc
+        sed -i 's#</div></div><div id="footer">#<p class="caption">Code coverage</p><ul><li><span class="module"><span class="noexpander">\&nbsp;</span><a href="./hpc/index.html">See coverage report here</a></span><span class="package">hs-tetris-0.1.0.0</span></li></ul></div></div><div id="footer"></div>#' public/index.html
     - name: 📘 Publish Documentation
       if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: peaceiris/actions-gh-pages@v3
