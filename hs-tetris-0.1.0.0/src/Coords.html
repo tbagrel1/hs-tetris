@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- Module : Coords</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Description : Type aliases and functions to deal with coordinates (either integer or rational coordinates)</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright : (c) Thomas BAGREL @ TWEAG, 2021</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License : AGPL-3.0</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Maintainer : Thomas BAGREL &lt;thomas.bagrel@tweag.io&gt;</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Stability : experimental</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Coords</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier">RatCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier">IntCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Coords.html#addCoord"><span class="hs-identifier">addCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Coords.html#toIntCoord"><span class="hs-identifier">toIntCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Type alias for rational coordinates</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">type</span><span> </span><span id="RatCoord"><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-var">RatCoord</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Rational</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Rational</span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Type alias for integer coordinates</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">type</span><span> </span><span id="IntCoord"><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-var">IntCoord</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | Translates the first point using the second one as a movement vector.</span><span>
+</span><span id="line-23"></span><span id="local-6989586621679056890"><span class="annot"><a href="Coords.html#addCoord"><span class="hs-identifier hs-type">addCoord</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-24"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-comment">-- | First point</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-comment">-- | Second point</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-comment">-- | Result of the translation</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679056890"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-31"></span><span id="addCoord"><span class="annot"><span class="annottext">addCoord :: (a, a) -&gt; (a, a) -&gt; (a, a)
+</span><a href="Coords.html#addCoord"><span class="hs-identifier hs-var hs-var">addCoord</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056889"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056889"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056888"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056888"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056887"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056887"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056886"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056886"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056889"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056887"><span class="hs-identifier hs-var">x2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056888"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679056886"><span class="hs-identifier hs-var">y2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- | Rounds the point coordinates to the nearest integers to give a IntCoord</span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Coords.html#toIntCoord"><span class="hs-identifier hs-type">toIntCoord</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-comment">-- | Rational coordinates to round</span><span>
+</span><span id="line-36"></span><span>  </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-comment">-- | Result of the rounding</span><span>
+</span><span id="line-38"></span><span>  </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span>
+</span><span id="line-39"></span><span id="toIntCoord"><span class="annot"><span class="annottext">toIntCoord :: RatCoord -&gt; IntCoord
+</span><a href="Coords.html#toIntCoord"><span class="hs-identifier hs-var hs-var">toIntCoord</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056884"><span class="annot"><span class="annottext">Rational
+</span><a href="#local-6989586621679056884"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056883"><span class="annot"><span class="annottext">Rational
+</span><a href="#local-6989586621679056883"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Rational -&gt; Int
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">round</span></span><span> </span><span class="annot"><span class="annottext">Rational
+</span><a href="#local-6989586621679056884"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Rational -&gt; Int
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">round</span></span><span> </span><span class="annot"><span class="annottext">Rational
+</span><a href="#local-6989586621679056883"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span></pre></body></html>

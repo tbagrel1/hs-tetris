@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- Module : Utils</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Description : General helper functions.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright : (c) Thomas BAGREL @ TWEAG, 2021</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License : AGPL-3.0</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Maintainer : Thomas BAGREL &lt;thomas.bagrel@tweag.io&gt;</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Stability : experimental</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Utils</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- | Extract the head of the list if there is some.</span><span>
+</span><span id="line-11"></span><span id="local-6989586621679057011"><span class="annot"><a href="Utils.html#headMaybe"><span class="hs-identifier hs-type">headMaybe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679057011"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679057011"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-12"></span><span id="headMaybe"><span class="annot"><span class="annottext">headMaybe :: [a] -&gt; Maybe a
+</span><a href="Utils.html#headMaybe"><span class="hs-identifier hs-var hs-var">headMaybe</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe a
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-13"></span><span class="annot"><a href="Utils.html#headMaybe"><span class="hs-identifier hs-var">headMaybe</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057009"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679057009"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679057008"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679057008"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Maybe a
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679057009"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Extract the last element of the list if there is some.</span><span>
+</span><span id="line-16"></span><span id="local-6989586621679057024"><span class="annot"><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-type">lastMaybe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679057024"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679057024"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-17"></span><span id="lastMaybe"><span class="annot"><span class="annottext">lastMaybe :: [a] -&gt; Maybe a
+</span><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-var hs-var">lastMaybe</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe a
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-18"></span><span class="annot"><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-var">lastMaybe</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057006"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679057006"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Maybe a
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679057006"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-var">lastMaybe</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057005"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679057005"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679057004"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679057004"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; Maybe a
+forall a. [a] -&gt; Maybe a
+</span><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-var">lastMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679057004"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Drops the values from the list whose index does not satisfy the given predicate.</span><span>
+</span><span id="line-22"></span><span id="local-6989586621679057003"><span class="annot"><a href="Utils.html#indexFilter"><span class="hs-identifier hs-type">indexFilter</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-comment">-- | Predicate on index</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-comment">-- | Base list</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679057003"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-comment">-- | Filtered list</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679057003"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span></span><span>
+</span><span id="line-29"></span><span id="indexFilter"><span class="annot"><span class="annottext">indexFilter :: (Int -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><a href="Utils.html#indexFilter"><span class="hs-identifier hs-var hs-var">indexFilter</span></a></span></span><span> </span><span id="local-6989586621679057001"><span class="annot"><span class="annottext">Int -&gt; Bool
+</span><a href="#local-6989586621679057001"><span class="hs-identifier hs-var">indexPred</span></a></span></span><span> </span><span id="local-6989586621679057000"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679057000"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((Int, a) -&gt; a) -&gt; [(Int, a)] -&gt; [a]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">(Int, a) -&gt; a
+forall a b. (a, b) -&gt; b
+</span><span class="hs-identifier hs-var">snd</span></span><span> </span><span class="annot"><span class="annottext">([(Int, a)] -&gt; [a]) -&gt; [(Int, a)] -&gt; [a]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">((Int, a) -&gt; Bool) -&gt; [(Int, a)] -&gt; [(Int, a)]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679056999"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056999"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Bool
+</span><a href="#local-6989586621679057001"><span class="hs-identifier hs-var">indexPred</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056999"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([(Int, a)] -&gt; [(Int, a)]) -&gt; [(Int, a)] -&gt; [(Int, a)]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; [a] -&gt; [(Int, a)]
+forall a b. [a] -&gt; [b] -&gt; [(a, b)]
+</span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">..</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679057000"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-30"></span></pre></body></html>

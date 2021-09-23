@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- Module : Game</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Description : Constants and types defining the Tetris gameplay.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright : (c) Thomas BAGREL @ TWEAG, 2021</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License : AGPL-3.0</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Maintainer : Thomas BAGREL &lt;thomas.bagrel@tweag.io&gt;</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Stability : experimental</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Game</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.html#KeyMapping"><span class="hs-identifier">KeyMapping</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Game.html#ActionType"><span class="hs-identifier">ActionType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier">MoveType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Game.html#ControlType"><span class="hs-identifier">ControlType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Game.html#ticksPerSecond"><span class="hs-identifier">ticksPerSecond</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Game.html#initialSpeed"><span class="hs-identifier">initialSpeed</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Game.html#dropTickInterval"><span class="hs-identifier">dropTickInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Game.html#playableRowNb"><span class="hs-identifier">playableRowNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Game.html#totalRowNb"><span class="hs-identifier">totalRowNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Game.html#colNb"><span class="hs-identifier">colNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Game.html#isInPlayableGrid"><span class="hs-identifier">isInPlayableGrid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Game.html#isInTotalGrid"><span class="hs-identifier">isInTotalGrid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Game.html#isInGridOrAbove"><span class="hs-identifier">isInGridOrAbove</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Game.html#defaultKeyMapping"><span class="hs-identifier">defaultKeyMapping</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Coords.html"><span class="hs-identifier">Coords</span></a></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier">IntCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Gloss.Interface.IO.Game</span></span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Key</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- | Type alias representing the key mapping used by the game</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">type</span><span> </span><span id="KeyMapping"><span class="annot"><a href="Game.html#KeyMapping"><span class="hs-identifier hs-var">KeyMapping</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Key</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.html#ActionType"><span class="hs-identifier hs-type">ActionType</span></a></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Either an in-game move action, or a control action (play, pause, reset...)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">data</span><span> </span><span id="ActionType"><span class="annot"><a href="Game.html#ActionType"><span class="hs-identifier hs-var">ActionType</span></a></span></span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="Move"><span class="annot"><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span></span><span> </span><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier hs-type">MoveType</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="Control"><span class="annot"><a href="Game.html#Control"><span class="hs-identifier hs-var">Control</span></a></span></span><span> </span><span class="annot"><a href="Game.html#ControlType"><span class="hs-identifier hs-type">ControlType</span></a></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | All possible moves in the game</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">data</span><span> </span><span id="MoveType"><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier hs-var">MoveType</span></a></span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | Counter-clockwise rotation</span><span>
+</span><span id="line-44"></span><span>    </span><span id="RotateLeft"><span class="annot"><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Clockwise rotation</span><span>
+</span><span id="line-46"></span><span>    </span><span id="RotateRight"><span class="annot"><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Move down (1 step)</span><span>
+</span><span id="line-48"></span><span>    </span><span id="MoveDown"><span class="annot"><a href="Game.html#MoveDown"><span class="hs-identifier hs-var">MoveDown</span></a></span></span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Move left (1 step)</span><span>
+</span><span id="line-50"></span><span>    </span><span id="MoveLeft"><span class="annot"><a href="Game.html#MoveLeft"><span class="hs-identifier hs-var">MoveLeft</span></a></span></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Move right (1 step)</span><span>
+</span><span id="line-52"></span><span>    </span><span id="MoveRight"><span class="annot"><a href="Game.html#MoveRight"><span class="hs-identifier hs-var">MoveRight</span></a></span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Move down (as much as possible)</span><span>
+</span><span id="line-54"></span><span>    </span><span id="FullDrop"><span class="annot"><a href="Game.html#FullDrop"><span class="hs-identifier hs-var">FullDrop</span></a></span></span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056923"><span id="local-6989586621679056925"><span class="annot"><span class="annottext">MoveType -&gt; MoveType -&gt; Bool
+(MoveType -&gt; MoveType -&gt; Bool)
+-&gt; (MoveType -&gt; MoveType -&gt; Bool) -&gt; Eq MoveType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: MoveType -&gt; MoveType -&gt; Bool
+$c/= :: MoveType -&gt; MoveType -&gt; Bool
+== :: MoveType -&gt; MoveType -&gt; Bool
+$c== :: MoveType -&gt; MoveType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056916"><span id="local-6989586621679056918"><span id="local-6989586621679056920"><span class="annot"><span class="annottext">Int -&gt; MoveType -&gt; ShowS
+[MoveType] -&gt; ShowS
+MoveType -&gt; String
+(Int -&gt; MoveType -&gt; ShowS)
+-&gt; (MoveType -&gt; String) -&gt; ([MoveType] -&gt; ShowS) -&gt; Show MoveType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [MoveType] -&gt; ShowS
+$cshowList :: [MoveType] -&gt; ShowS
+show :: MoveType -&gt; String
+$cshow :: MoveType -&gt; String
+showsPrec :: Int -&gt; MoveType -&gt; ShowS
+$cshowsPrec :: Int -&gt; MoveType -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- | All control actions (not related to in-game movement)</span><span>
+</span><span id="line-58"></span><span class="hs-keyword">data</span><span> </span><span id="ControlType"><span class="annot"><a href="Game.html#ControlType"><span class="hs-identifier hs-var">ControlType</span></a></span></span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | Pause or resume the current game</span><span>
+</span><span id="line-60"></span><span>    </span><span id="PauseResume"><span class="annot"><a href="Game.html#PauseResume"><span class="hs-identifier hs-var">PauseResume</span></a></span></span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Reset the game</span><span>
+</span><span id="line-62"></span><span>    </span><span id="Reset"><span class="annot"><a href="Game.html#Reset"><span class="hs-identifier hs-var">Reset</span></a></span></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- | Controls the update rate of the game screen and data</span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Game.html#ticksPerSecond"><span class="hs-identifier hs-type">ticksPerSecond</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-66"></span><span id="ticksPerSecond"><span class="annot"><span class="annottext">ticksPerSecond :: Int
+</span><a href="Game.html#ticksPerSecond"><span class="hs-identifier hs-var hs-var">ticksPerSecond</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">30</span></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- | Controls the speed at which pieces fall at the beginning of the game</span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Game.html#initialSpeed"><span class="hs-identifier hs-type">initialSpeed</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>
+</span><span id="line-70"></span><span id="initialSpeed"><span class="annot"><span class="annottext">initialSpeed :: Float
+</span><a href="Game.html#initialSpeed"><span class="hs-identifier hs-var hs-var">initialSpeed</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0.7</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- | Computes the interval between two drop ticks using ticksPerSecond and the current speed</span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Game.html#dropTickInterval"><span class="hs-identifier hs-type">dropTickInterval</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-comment">-- | Current speed factor</span><span>
+</span><span id="line-75"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-comment">-- | Resulting drop tick interval</span><span>
+</span><span id="line-77"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-78"></span><span id="dropTickInterval"><span class="annot"><span class="annottext">dropTickInterval :: Float -&gt; Int
+</span><a href="Game.html#dropTickInterval"><span class="hs-identifier hs-var hs-var">dropTickInterval</span></a></span></span><span> </span><span id="local-6989586621679056912"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679056912"><span class="hs-identifier hs-var">speed</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Int
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">round</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#ticksPerSecond"><span class="hs-identifier hs-var">ticksPerSecond</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679056912"><span class="hs-identifier hs-var">speed</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- | Number of rows in the grid that the player can actually use</span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Game.html#playableRowNb"><span class="hs-identifier hs-type">playableRowNb</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-82"></span><span id="playableRowNb"><span class="annot"><span class="annottext">playableRowNb :: Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var hs-var">playableRowNb</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">20</span></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- | Number of rows in the grid including the two where pieces spawn</span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Game.html#totalRowNb"><span class="hs-identifier hs-type">totalRowNb</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-86"></span><span id="totalRowNb"><span class="annot"><span class="annottext">totalRowNb :: Int
+</span><a href="Game.html#totalRowNb"><span class="hs-identifier hs-var hs-var">totalRowNb</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var">playableRowNb</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- | Number of columns in the grid</span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Game.html#colNb"><span class="hs-identifier hs-type">colNb</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-90"></span><span id="colNb"><span class="annot"><span class="annottext">colNb :: Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var hs-var">colNb</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- | Tells whether a 2D-point is in the playable part of the grid or not</span><span>
+</span><span id="line-93"></span><span class="annot"><a href="Game.html#isInPlayableGrid"><span class="hs-identifier hs-type">isInPlayableGrid</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-94"></span><span id="isInPlayableGrid"><span class="annot"><span class="annottext">isInPlayableGrid :: IntCoord -&gt; Bool
+</span><a href="Game.html#isInPlayableGrid"><span class="hs-identifier hs-var hs-var">isInPlayableGrid</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056908"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056908"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056907"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056907"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056908"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056908"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056907"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056907"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var">playableRowNb</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- | Tells whether a 2D-point is in the grid, including the spawn zone, or not.</span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Game.html#isInTotalGrid"><span class="hs-identifier hs-type">isInTotalGrid</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-98"></span><span id="isInTotalGrid"><span class="annot"><span class="annottext">isInTotalGrid :: IntCoord -&gt; Bool
+</span><a href="Game.html#isInTotalGrid"><span class="hs-identifier hs-var hs-var">isInTotalGrid</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056904"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056904"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056903"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056903"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056904"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056904"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056903"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056903"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#totalRowNb"><span class="hs-identifier hs-var">totalRowNb</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- | Tells whether a 2D-point is in the grid and its vertical extension, or not.</span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Game.html#isInGridOrAbove"><span class="hs-identifier hs-type">isInGridOrAbove</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-102"></span><span id="isInGridOrAbove"><span class="annot"><span class="annottext">isInGridOrAbove :: IntCoord -&gt; Bool
+</span><a href="Game.html#isInGridOrAbove"><span class="hs-identifier hs-var hs-var">isInGridOrAbove</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679056902"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056902"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679056901"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056901"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056902"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056902"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679056901"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Default key mapping, based on FPS controls</span><span>
+</span><span id="line-105"></span><span class="annot"><a href="Game.html#defaultKeyMapping"><span class="hs-identifier hs-type">defaultKeyMapping</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.html#KeyMapping"><span class="hs-identifier hs-type">KeyMapping</span></a></span><span>
+</span><span id="line-106"></span><span id="defaultKeyMapping"><span class="annot"><span class="annottext">defaultKeyMapping :: KeyMapping
+</span><a href="Game.html#defaultKeyMapping"><span class="hs-identifier hs-var hs-var">defaultKeyMapping</span></a></span></span><span> </span><span id="local-6989586621679056900"><span class="annot"><span class="annottext">Key
+</span><a href="#local-6989586621679056900"><span class="hs-identifier hs-var">key</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Key
+</span><a href="#local-6989586621679056900"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-107"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'a'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span><span>
+</span><span id="line-108"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'e'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span><span>
+</span><span id="line-109"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'s'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveDown"><span class="hs-identifier hs-var">MoveDown</span></a></span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'q'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveLeft"><span class="hs-identifier hs-var">MoveLeft</span></a></span><span>
+</span><span id="line-111"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'d'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveRight"><span class="hs-identifier hs-var">MoveRight</span></a></span><span>
+</span><span id="line-112"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'z'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; ActionType
+</span><a href="Game.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#FullDrop"><span class="hs-identifier hs-var">FullDrop</span></a></span><span>
+</span><span id="line-113"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'p'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ControlType -&gt; ActionType
+</span><a href="Game.html#Control"><span class="hs-identifier hs-var">Control</span></a></span><span> </span><span class="annot"><span class="annottext">ControlType
+</span><a href="Game.html#PauseResume"><span class="hs-identifier hs-var">PauseResume</span></a></span><span>
+</span><span id="line-114"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'r'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ActionType -&gt; Maybe ActionType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(ActionType -&gt; Maybe ActionType) -&gt; ActionType -&gt; Maybe ActionType
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ControlType -&gt; ActionType
+</span><a href="Game.html#Control"><span class="hs-identifier hs-var">Control</span></a></span><span> </span><span class="annot"><span class="annottext">ControlType
+</span><a href="Game.html#Reset"><span class="hs-identifier hs-var">Reset</span></a></span><span>
+</span><span id="line-115"></span><span>  </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe ActionType
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-116"></span></pre></body></html>

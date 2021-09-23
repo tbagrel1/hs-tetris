@@ -1,0 +1,922 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE NamedFieldPuns #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Module : Pieces</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Description : Type and functions related to Tetris pieces (Tetrominos)</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Copyright : (c) Thomas BAGREL @ TWEAG, 2021</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- License : AGPL-3.0</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Maintainer : Thomas BAGREL &lt;thomas.bagrel@tweag.io&gt;</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Stability : experimental</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Pieces</span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier">Orientation</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier">PieceType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier">MovingPiece</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier">PieceGrid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Pieces.html#generatePieceBag"><span class="hs-identifier">generatePieceBag</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Pieces.html#spawnPiece"><span class="hs-identifier">spawnPiece</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Pieces.html#applyMove"><span class="hs-identifier">applyMove</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Pieces.html#solidifyPiece"><span class="hs-identifier">solidifyPiece</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Pieces.html#selfRepr"><span class="hs-identifier">selfRepr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Pieces.html#ghostRepr"><span class="hs-identifier">ghostRepr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Pieces.html#isValid"><span class="hs-identifier">isValid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Coords.html"><span class="hs-identifier">Coords</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier">IntCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier">RatCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="Coords.html#addCoord"><span class="hs-identifier">addCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Coords.html#toIntCoord"><span class="hs-identifier">toIntCoord</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span>
+</span><span id="line-32"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">fromMaybe</span></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-identifier">isNothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Ratio</span></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-operator">(%)</span></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.html"><span class="hs-identifier">Game</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier">MoveType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="Game.html#colNb"><span class="hs-identifier">colNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="Game.html#isInGridOrAbove"><span class="hs-identifier">isInGridOrAbove</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="Game.html#isInTotalGrid"><span class="hs-identifier">isInTotalGrid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><a href="Game.html#playableRowNb"><span class="hs-identifier">playableRowNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><a href="Game.html#totalRowNb"><span class="hs-identifier">totalRowNb</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Grid.html"><span class="hs-identifier">Grid</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Grid.html#Grid"><span class="hs-identifier">Grid</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><a href="Grid.html#update"><span class="hs-identifier">update</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><a href="Grid.html#%21%21%21"><span class="hs-operator">(!!!)</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Random.Shuffle</span></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">shuffleM</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Utils.html#headMaybe"><span class="hs-identifier">headMaybe</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><a href="Utils.html#lastMaybe"><span class="hs-identifier">lastMaybe</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | Type alias for a grid in which each cell can contain a colored square or be empty.</span><span>
+</span><span id="line-60"></span><span class="hs-keyword">type</span><span> </span><span id="PieceGrid"><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-var">PieceGrid</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Grid.html#Grid"><span class="hs-identifier hs-type">Grid</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- | Represents the four orientations a piece can take in Tetris</span><span>
+</span><span id="line-63"></span><span class="hs-keyword">data</span><span> </span><span id="Orientation"><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-var">Orientation</span></a></span></span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | Initial state, horizontal (for most pieces)</span><span>
+</span><span id="line-65"></span><span>    </span><span id="S0"><span class="annot"><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span></span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | After 1 clockwise rotation action</span><span>
+</span><span id="line-67"></span><span>    </span><span id="S1"><span class="annot"><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | After 2 rotation actions</span><span>
+</span><span id="line-69"></span><span>    </span><span id="S2"><span class="annot"><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | After 3 clockwise rotation actions</span><span>
+</span><span id="line-71"></span><span>    </span><span id="S3"><span class="annot"><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span></span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057219"><span id="local-6989586621679057221"><span class="annot"><span class="annottext">Orientation -&gt; Orientation -&gt; Bool
+(Orientation -&gt; Orientation -&gt; Bool)
+-&gt; (Orientation -&gt; Orientation -&gt; Bool) -&gt; Eq Orientation
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Orientation -&gt; Orientation -&gt; Bool
+$c/= :: Orientation -&gt; Orientation -&gt; Bool
+== :: Orientation -&gt; Orientation -&gt; Bool
+$c== :: Orientation -&gt; Orientation -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057212"><span id="local-6989586621679057214"><span id="local-6989586621679057216"><span class="annot"><span class="annottext">Int -&gt; Orientation -&gt; ShowS
+[Orientation] -&gt; ShowS
+Orientation -&gt; String
+(Int -&gt; Orientation -&gt; ShowS)
+-&gt; (Orientation -&gt; String)
+-&gt; ([Orientation] -&gt; ShowS)
+-&gt; Show Orientation
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Orientation] -&gt; ShowS
+$cshowList :: [Orientation] -&gt; ShowS
+show :: Orientation -&gt; String
+$cshow :: Orientation -&gt; String
+showsPrec :: Int -&gt; Orientation -&gt; ShowS
+$cshowsPrec :: Int -&gt; Orientation -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- | Tetrominos types</span><span>
+</span><span id="line-75"></span><span class="hs-keyword">data</span><span> </span><span id="PieceType"><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-var">PieceType</span></a></span></span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="I"><span class="annot"><a href="Pieces.html#I"><span class="hs-identifier hs-var">I</span></a></span></span><span>
+</span><span id="line-77"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="J"><span class="annot"><a href="Pieces.html#J"><span class="hs-identifier hs-var">J</span></a></span></span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="L"><span class="annot"><a href="Pieces.html#L"><span class="hs-identifier hs-var">L</span></a></span></span><span>
+</span><span id="line-79"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="O"><span class="annot"><a href="Pieces.html#O"><span class="hs-identifier hs-var">O</span></a></span></span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="S"><span class="annot"><a href="Pieces.html#S"><span class="hs-identifier hs-var">S</span></a></span></span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="T"><span class="annot"><a href="Pieces.html#T"><span class="hs-identifier hs-var">T</span></a></span></span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="Z"><span class="annot"><a href="Pieces.html#Z"><span class="hs-identifier hs-var">Z</span></a></span></span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057200"><span id="local-6989586621679057202"><span class="annot"><span class="annottext">PieceType -&gt; PieceType -&gt; Bool
+(PieceType -&gt; PieceType -&gt; Bool)
+-&gt; (PieceType -&gt; PieceType -&gt; Bool) -&gt; Eq PieceType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: PieceType -&gt; PieceType -&gt; Bool
+$c/= :: PieceType -&gt; PieceType -&gt; Bool
+== :: PieceType -&gt; PieceType -&gt; Bool
+$c== :: PieceType -&gt; PieceType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057194"><span id="local-6989586621679057196"><span id="local-6989586621679057198"><span class="annot"><span class="annottext">Int -&gt; PieceType -&gt; ShowS
+[PieceType] -&gt; ShowS
+PieceType -&gt; String
+(Int -&gt; PieceType -&gt; ShowS)
+-&gt; (PieceType -&gt; String)
+-&gt; ([PieceType] -&gt; ShowS)
+-&gt; Show PieceType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [PieceType] -&gt; ShowS
+$cshowList :: [PieceType] -&gt; ShowS
+show :: PieceType -&gt; String
+$cshow :: PieceType -&gt; String
+showsPrec :: Int -&gt; PieceType -&gt; ShowS
+$cshowsPrec :: Int -&gt; PieceType -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- | The moving piece (i.e. one which is still falling) is defined by its type, orientation and center of rotation</span><span>
+</span><span id="line-86"></span><span class="hs-keyword">data</span><span> </span><span id="MovingPiece"><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-var">MovingPiece</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MovingPiece"><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-var">MovingPiece</span></a></span></span><span>
+</span><span id="line-87"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Type of tetromino</span><span>
+</span><span id="line-88"></span><span>    </span><span id="pieceType"><span class="annot"><span class="annottext">MovingPiece -&gt; PieceType
+</span><a href="Pieces.html#pieceType"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-comment">-- | Current orientation of the piece</span><span>
+</span><span id="line-90"></span><span>    </span><span id="orientation"><span class="annot"><span class="annottext">MovingPiece -&gt; Orientation
+</span><a href="Pieces.html#orientation"><span class="hs-identifier hs-var hs-var">orientation</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-type">Orientation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-comment">-- | Center of rotation of this piece. Can be a rational point (we consider that the center of each grid cell has integer coordinates, so the borders/corners of cells have rational coordinates)</span><span>
+</span><span id="line-92"></span><span>    </span><span id="center"><span class="annot"><span class="annottext">MovingPiece -&gt; RatCoord
+</span><a href="Pieces.html#center"><span class="hs-identifier hs-var hs-var">center</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057186"><span id="local-6989586621679057188"><span class="annot"><span class="annottext">MovingPiece -&gt; MovingPiece -&gt; Bool
+(MovingPiece -&gt; MovingPiece -&gt; Bool)
+-&gt; (MovingPiece -&gt; MovingPiece -&gt; Bool) -&gt; Eq MovingPiece
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: MovingPiece -&gt; MovingPiece -&gt; Bool
+$c/= :: MovingPiece -&gt; MovingPiece -&gt; Bool
+== :: MovingPiece -&gt; MovingPiece -&gt; Bool
+$c== :: MovingPiece -&gt; MovingPiece -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057180"><span id="local-6989586621679057182"><span id="local-6989586621679057184"><span class="annot"><span class="annottext">Int -&gt; MovingPiece -&gt; ShowS
+[MovingPiece] -&gt; ShowS
+MovingPiece -&gt; String
+(Int -&gt; MovingPiece -&gt; ShowS)
+-&gt; (MovingPiece -&gt; String)
+-&gt; ([MovingPiece] -&gt; ShowS)
+-&gt; Show MovingPiece
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [MovingPiece] -&gt; ShowS
+$cshowList :: [MovingPiece] -&gt; ShowS
+show :: MovingPiece -&gt; String
+$cshow :: MovingPiece -&gt; String
+showsPrec :: Int -&gt; MovingPiece -&gt; ShowS
+$cshowsPrec :: Int -&gt; MovingPiece -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- | Gives the relative positions of a tetromino squares with relation to its center and orientation.</span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Pieces.html#pieceRelCoords"><span class="hs-identifier hs-type">pieceRelCoords</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-98"></span><span>  </span><span class="hs-comment">-- | Type of tetromino</span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-comment">-- | Current orientation of this tetromino</span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-type">Orientation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-comment">-- | List of relative square positions</span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-104"></span><span id="pieceRelCoords"><span class="annot"><span class="annottext">pieceRelCoords :: PieceType -&gt; Orientation -&gt; [RatCoord]
+</span><a href="Pieces.html#pieceRelCoords"><span class="hs-identifier hs-var hs-var">pieceRelCoords</span></a></span></span><span> </span><span id="local-6989586621679057178"><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057178"><span class="hs-identifier hs-var">pieceType</span></a></span></span><span> </span><span id="local-6989586621679057177"><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057177"><span class="hs-identifier hs-var">orientation</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(RatCoord -&gt; RatCoord) -&gt; [RatCoord] -&gt; [RatCoord]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation -&gt; RatCoord -&gt; RatCoord
+</span><a href="Pieces.html#applyOrientation"><span class="hs-identifier hs-var">applyOrientation</span></a></span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057177"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[RatCoord]
+</span><a href="#local-6989586621679057175"><span class="hs-identifier hs-var">relPositionsS0</span></a></span><span>
+</span><span id="line-105"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679057175"><span class="annot"><span class="annottext">relPositionsS0 :: [RatCoord]
+</span><a href="#local-6989586621679057175"><span class="hs-identifier hs-var hs-var">relPositionsS0</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057178"><span class="hs-identifier hs-var">pieceType</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-107"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#I"><span class="hs-identifier hs-var">I</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-108"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#J"><span class="hs-identifier hs-var">J</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-109"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#L"><span class="hs-identifier hs-var">L</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-110"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#O"><span class="hs-identifier hs-var">O</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-111"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#S"><span class="hs-identifier hs-var">S</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-112"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#T"><span class="hs-identifier hs-var">T</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-113"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#Z"><span class="hs-identifier hs-var">Z</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-114"></span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- | Gives the absolute positions of a tetromino squares in the grid.</span><span>
+</span><span id="line-116"></span><span class="annot"><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-type">pieceAbsCoords</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-comment">-- | Represents the tetromino (because we need all three fields of 'MovingPiece' to compute the absolute positions)</span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-comment">-- | List of absolute square positions (grid coordinates)</span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-121"></span><span id="pieceAbsCoords"><span class="annot"><span class="annottext">pieceAbsCoords :: MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-var hs-var">pieceAbsCoords</span></a></span></span><span> </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-special">{</span><span id="local-6989586621679057173"><span class="annot"><span class="annottext">PieceType
+pieceType :: PieceType
+pieceType :: MovingPiece -&gt; PieceType
+</span><a href="#local-6989586621679057173"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057172"><span class="annot"><span class="annottext">Orientation
+orientation :: Orientation
+orientation :: MovingPiece -&gt; Orientation
+</span><a href="#local-6989586621679057172"><span class="hs-identifier hs-var hs-var">orientation</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057171"><span class="annot"><span class="annottext">RatCoord
+center :: RatCoord
+center :: MovingPiece -&gt; RatCoord
+</span><a href="#local-6989586621679057171"><span class="hs-identifier hs-var hs-var">center</span></a></span></span><span class="hs-special">}</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(RatCoord -&gt; IntCoord) -&gt; [RatCoord] -&gt; [IntCoord]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">RatCoord -&gt; IntCoord
+</span><a href="Coords.html#toIntCoord"><span class="hs-identifier hs-var">toIntCoord</span></a></span><span> </span><span class="annot"><span class="annottext">(RatCoord -&gt; IntCoord)
+-&gt; (RatCoord -&gt; RatCoord) -&gt; RatCoord -&gt; IntCoord
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">RatCoord -&gt; RatCoord -&gt; RatCoord
+forall a. Num a =&gt; (a, a) -&gt; (a, a) -&gt; (a, a)
+</span><a href="Coords.html#addCoord"><span class="hs-identifier hs-var">addCoord</span></a></span><span> </span><span class="annot"><span class="annottext">RatCoord
+</span><a href="#local-6989586621679057171"><span class="hs-identifier hs-var">center</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PieceType -&gt; Orientation -&gt; [RatCoord]
+</span><a href="Pieces.html#pieceRelCoords"><span class="hs-identifier hs-var">pieceRelCoords</span></a></span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057173"><span class="hs-identifier hs-var">pieceType</span></a></span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057172"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- | Tells whether a moving piece position is valid or not:</span><span>
+</span><span id="line-124"></span><span class="hs-comment">--    + all its squares must be in the grid or its vertical extension</span><span>
+</span><span id="line-125"></span><span class="hs-comment">--    + the squares must not overlap an already solidified colored square in the grid</span><span>
+</span><span id="line-126"></span><span class="annot"><a href="Pieces.html#isValid"><span class="hs-identifier hs-type">isValid</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-127"></span><span>  </span><span class="hs-comment">-- | The grid to work on</span><span>
+</span><span id="line-128"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-type">PieceGrid</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-comment">-- | The piece position to check</span><span>
+</span><span id="line-130"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-131"></span><span>  </span><span class="hs-comment">-- | True iif the moving piece position is valid</span><span>
+</span><span id="line-132"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-133"></span><span id="isValid"><span class="annot"><span class="annottext">isValid :: PieceGrid -&gt; MovingPiece -&gt; Bool
+</span><a href="Pieces.html#isValid"><span class="hs-identifier hs-var hs-var">isValid</span></a></span></span><span> </span><span id="local-6989586621679057169"><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057169"><span class="hs-identifier hs-var">grid</span></a></span></span><span> </span><span id="local-6989586621679057168"><span class="annot"><span class="annottext">MovingPiece
+</span><a href="#local-6989586621679057168"><span class="hs-identifier hs-var">piece</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(IntCoord -&gt; Bool) -&gt; [IntCoord] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">all</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679057166"><span class="annot"><span class="annottext">IntCoord
+</span><a href="#local-6989586621679057166"><span class="hs-identifier hs-var">gridPoint</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IntCoord -&gt; Bool
+</span><a href="Game.html#isInGridOrAbove"><span class="hs-identifier hs-var">isInGridOrAbove</span></a></span><span> </span><span class="annot"><span class="annottext">IntCoord
+</span><a href="#local-6989586621679057166"><span class="hs-identifier hs-var">gridPoint</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Maybe PieceType -&gt; Bool
+forall a. Maybe a -&gt; Bool
+</span><span class="hs-identifier hs-var">isNothing</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057169"><span class="hs-identifier hs-var">grid</span></a></span><span> </span><span class="annot"><span class="annottext">PieceGrid -&gt; IntCoord -&gt; Maybe PieceType
+forall a. Grid a -&gt; IntCoord -&gt; a
+</span><a href="Grid.html#%21%21%21"><span class="hs-operator hs-var">!!!</span></a></span><span> </span><span class="annot"><span class="annottext">IntCoord
+</span><a href="#local-6989586621679057166"><span class="hs-identifier hs-var">gridPoint</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([IntCoord] -&gt; Bool) -&gt; [IntCoord] -&gt; Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-var">pieceAbsCoords</span></a></span><span> </span><span class="annot"><span class="annottext">MovingPiece
+</span><a href="#local-6989586621679057168"><span class="hs-identifier hs-var">piece</span></a></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="hs-comment">-- | Rotates a relative position given for S0 to the one for the specified orientation.</span><span>
+</span><span id="line-136"></span><span class="annot"><a href="Pieces.html#applyOrientation"><span class="hs-identifier hs-type">applyOrientation</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-comment">-- | Output orientation</span><span>
+</span><span id="line-138"></span><span>  </span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-type">Orientation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-139"></span><span>  </span><span class="hs-comment">-- | Relative position for S0</span><span>
+</span><span id="line-140"></span><span>  </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-141"></span><span>  </span><span class="hs-comment">-- | Relative position for the specified orientation</span><span>
+</span><span id="line-142"></span><span>  </span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span>
+</span><span id="line-143"></span><span id="applyOrientation"><span class="annot"><span class="annottext">applyOrientation :: Orientation -&gt; RatCoord -&gt; RatCoord
+</span><a href="Pieces.html#applyOrientation"><span class="hs-identifier hs-var hs-var">applyOrientation</span></a></span></span><span> </span><span id="local-6989586621679057164"><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057164"><span class="hs-identifier hs-var">orientation</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057163"><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057163"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057162"><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057162"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057164"><span class="hs-identifier hs-var">orientation</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-144"></span><span>  </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057163"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057162"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-145"></span><span>  </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057162"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057163"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-146"></span><span>  </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057163"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057162"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-147"></span><span>  </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057162"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057163"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span class="hs-comment">-- | Computes the next orientation of a piece and the list of translations to try when an action is requested by the user.</span><span>
+</span><span id="line-150"></span><span class="annot"><a href="Pieces.html#nextOrientationAndTranslations"><span class="hs-identifier hs-type">nextOrientationAndTranslations</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-151"></span><span>  </span><span class="hs-comment">-- | Type of action</span><span>
+</span><span id="line-152"></span><span>  </span><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier hs-type">MoveType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-153"></span><span>  </span><span class="hs-comment">-- | Current orientation of the tetromino</span><span>
+</span><span id="line-154"></span><span>  </span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-type">Orientation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-155"></span><span>  </span><span class="hs-comment">-- | Type of tetromino</span><span>
+</span><span id="line-156"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-157"></span><span>  </span><span class="hs-comment">-- | Future orientation and list of translations to try</span><span>
+</span><span id="line-158"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Pieces.html#Orientation"><span class="hs-identifier hs-type">Orientation</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Coords.html#RatCoord"><span class="hs-identifier hs-type">RatCoord</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-159"></span><span id="nextOrientationAndTranslations"><span class="annot"><span class="annottext">nextOrientationAndTranslations :: MoveType -&gt; Orientation -&gt; PieceType -&gt; (Orientation, [RatCoord])
+</span><a href="Pieces.html#nextOrientationAndTranslations"><span class="hs-identifier hs-var hs-var">nextOrientationAndTranslations</span></a></span></span><span> </span><span id="local-6989586621679057160"><span class="annot"><span class="annottext">MoveType
+</span><a href="#local-6989586621679057160"><span class="hs-identifier hs-var">moveType</span></a></span></span><span> </span><span id="local-6989586621679057159"><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span></span><span> </span><span id="local-6989586621679057158"><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057158"><span class="hs-identifier hs-var">pieceType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="#local-6989586621679057160"><span class="hs-identifier hs-var">moveType</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-160"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-161"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-163"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S1"><span class="hs-identifier hs-var">S1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-164"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-165"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S2"><span class="hs-identifier hs-var">S2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateRight"><span class="hs-identifier hs-var">RotateRight</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-167"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#RotateLeft"><span class="hs-identifier hs-var">RotateLeft</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S3"><span class="hs-identifier hs-var">S3</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[RatCoord] -&gt; [RatCoord] -&gt; [RatCoord]
+forall a b. (Num a, Num b) =&gt; [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var">originThenCase</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-168"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveDown"><span class="hs-identifier hs-var">MoveDown</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-169"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveLeft"><span class="hs-identifier hs-var">MoveLeft</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#MoveRight"><span class="hs-identifier hs-var">MoveRight</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-171"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#FullDrop"><span class="hs-identifier hs-var">FullDrop</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057159"><span class="hs-identifier hs-var">orientation</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057150"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679057150"><span class="annot"><span class="annottext">Ratio Integer
+</span><a href="#local-6989586621679057150"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Ratio Integer
+forall a. Real a =&gt; a -&gt; Ratio Integer
+</span><span class="hs-identifier hs-var">toRational</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#totalRowNb"><span class="hs-identifier hs-var">totalRowNb</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-172"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-173"></span><span>    </span><span id="local-6989586621679057156"><span class="annot"><span class="annottext">originThenCase :: [(a, b)] -&gt; [(a, b)] -&gt; [(a, b)]
+</span><a href="#local-6989586621679057156"><span class="hs-identifier hs-var hs-var">originThenCase</span></a></span></span><span> </span><span id="local-6989586621679057149"><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679057149"><span class="hs-identifier hs-var">pointsForOthers</span></a></span></span><span> </span><span id="local-6989586621679057148"><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679057148"><span class="hs-identifier hs-var">pointsForI</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057158"><span class="hs-identifier hs-var">pieceType</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-174"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#O"><span class="hs-identifier hs-var">O</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">b
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-175"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#I"><span class="hs-identifier hs-var">I</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">b
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(a, b) -&gt; [(a, b)] -&gt; [(a, b)]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679057148"><span class="hs-identifier hs-var">pointsForI</span></a></span><span>
+</span><span id="line-176"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">b
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(a, b) -&gt; [(a, b)] -&gt; [(a, b)]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[(a, b)]
+</span><a href="#local-6989586621679057149"><span class="hs-identifier hs-var">pointsForOthers</span></a></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span class="hs-comment">-- | Given the grid, the current moving piece and the move type requested by the user,</span><span>
+</span><span id="line-179"></span><span class="hs-comment">-- returns a moving piece with its orientation and position updated, if the move is possible.</span><span>
+</span><span id="line-180"></span><span class="annot"><a href="Pieces.html#applyMove"><span class="hs-identifier hs-type">applyMove</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-181"></span><span>  </span><span class="hs-comment">-- | The grid to work on. Used to check which moves are valid or not</span><span>
+</span><span id="line-182"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-type">PieceGrid</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-183"></span><span>  </span><span class="hs-comment">-- | The current state of the falling piece</span><span>
+</span><span id="line-184"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-185"></span><span>  </span><span class="hs-comment">-- | Move requested by the user</span><span>
+</span><span id="line-186"></span><span>  </span><span class="annot"><a href="Game.html#MoveType"><span class="hs-identifier hs-type">MoveType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-187"></span><span>  </span><span class="hs-comment">-- | Updated moving piece if the move can be executed</span><span>
+</span><span id="line-188"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span>
+</span><span id="line-189"></span><span id="applyMove"><span class="annot"><span class="annottext">applyMove :: PieceGrid -&gt; MovingPiece -&gt; MoveType -&gt; Maybe MovingPiece
+</span><a href="Pieces.html#applyMove"><span class="hs-identifier hs-var hs-var">applyMove</span></a></span></span><span> </span><span id="local-6989586621679057147"><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057147"><span class="hs-identifier hs-var">grid</span></a></span></span><span> </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-special">{</span><span id="local-6989586621679057146"><span class="annot"><span class="annottext">PieceType
+pieceType :: PieceType
+pieceType :: MovingPiece -&gt; PieceType
+</span><a href="#local-6989586621679057146"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057145"><span class="annot"><span class="annottext">Orientation
+orientation :: Orientation
+orientation :: MovingPiece -&gt; Orientation
+</span><a href="#local-6989586621679057145"><span class="hs-identifier hs-var hs-var">orientation</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057144"><span class="annot"><span class="annottext">RatCoord
+center :: RatCoord
+center :: MovingPiece -&gt; RatCoord
+</span><a href="#local-6989586621679057144"><span class="hs-identifier hs-var hs-var">center</span></a></span></span><span class="hs-special">}</span><span> </span><span id="local-6989586621679057143"><span class="annot"><span class="annottext">MoveType
+</span><a href="#local-6989586621679057143"><span class="hs-identifier hs-var">moveType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-190"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="#local-6989586621679057143"><span class="hs-identifier hs-var">moveType</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; MoveType -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#FullDrop"><span class="hs-identifier hs-var">FullDrop</span></a></span><span>
+</span><span id="line-191"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">[MovingPiece] -&gt; Maybe MovingPiece
+forall a. [a] -&gt; Maybe a
+</span><a href="Utils.html#lastMaybe"><span class="hs-identifier hs-var">lastMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">([MovingPiece] -&gt; Maybe MovingPiece)
+-&gt; [MovingPiece] -&gt; Maybe MovingPiece
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(MovingPiece -&gt; Bool) -&gt; [MovingPiece] -&gt; [MovingPiece]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">takeWhile</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PieceGrid -&gt; MovingPiece -&gt; Bool
+</span><a href="Pieces.html#isValid"><span class="hs-identifier hs-var">isValid</span></a></span><span> </span><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057147"><span class="hs-identifier hs-var">grid</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[MovingPiece]
+</span><a href="#local-6989586621679057141"><span class="hs-identifier hs-var">potentialMovingPieces</span></a></span><span>
+</span><span id="line-192"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">[MovingPiece] -&gt; Maybe MovingPiece
+forall a. [a] -&gt; Maybe a
+</span><a href="Utils.html#headMaybe"><span class="hs-identifier hs-var">headMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">([MovingPiece] -&gt; Maybe MovingPiece)
+-&gt; [MovingPiece] -&gt; Maybe MovingPiece
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(MovingPiece -&gt; Bool) -&gt; [MovingPiece] -&gt; [MovingPiece]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PieceGrid -&gt; MovingPiece -&gt; Bool
+</span><a href="Pieces.html#isValid"><span class="hs-identifier hs-var">isValid</span></a></span><span> </span><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057147"><span class="hs-identifier hs-var">grid</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[MovingPiece]
+</span><a href="#local-6989586621679057141"><span class="hs-identifier hs-var">potentialMovingPieces</span></a></span><span>
+</span><span id="line-193"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-194"></span><span>    </span><span id="local-6989586621679057141"><span class="annot"><span class="annottext">potentialMovingPieces :: [MovingPiece]
+</span><a href="#local-6989586621679057141"><span class="hs-identifier hs-var hs-var">potentialMovingPieces</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(RatCoord -&gt; MovingPiece) -&gt; [RatCoord] -&gt; [MovingPiece]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679057140"><span class="annot"><span class="annottext">RatCoord
+</span><a href="#local-6989586621679057140"><span class="hs-identifier hs-var">trans</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">MovingPiece :: PieceType -&gt; Orientation -&gt; RatCoord -&gt; MovingPiece
+</span><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><span class="annottext">PieceType
+pieceType :: PieceType
+pieceType :: PieceType
+</span><a href="#local-6989586621679057146"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">orientation :: Orientation
+</span><a href="Pieces.html#orientation"><span class="hs-identifier hs-var">orientation</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057139"><span class="hs-identifier hs-var">nextOrientation</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">center :: RatCoord
+</span><a href="Pieces.html#center"><span class="hs-identifier hs-var">center</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RatCoord -&gt; RatCoord -&gt; RatCoord
+forall a. Num a =&gt; (a, a) -&gt; (a, a) -&gt; (a, a)
+</span><a href="Coords.html#addCoord"><span class="hs-identifier hs-var">addCoord</span></a></span><span> </span><span class="annot"><span class="annottext">RatCoord
+</span><a href="#local-6989586621679057144"><span class="hs-identifier hs-var">center</span></a></span><span> </span><span class="annot"><span class="annottext">RatCoord
+</span><a href="#local-6989586621679057140"><span class="hs-identifier hs-var">trans</span></a></span><span class="hs-special">}</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[RatCoord]
+</span><a href="#local-6989586621679057138"><span class="hs-identifier hs-var">translations</span></a></span><span>
+</span><span id="line-195"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679057139"><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057139"><span class="hs-identifier hs-var">nextOrientation</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057138"><span class="annot"><span class="annottext">[RatCoord]
+</span><a href="#local-6989586621679057138"><span class="hs-identifier hs-var">translations</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MoveType -&gt; Orientation -&gt; PieceType -&gt; (Orientation, [RatCoord])
+</span><a href="Pieces.html#nextOrientationAndTranslations"><span class="hs-identifier hs-var">nextOrientationAndTranslations</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="#local-6989586621679057143"><span class="hs-identifier hs-var">moveType</span></a></span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="#local-6989586621679057145"><span class="hs-identifier hs-var">orientation</span></a></span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057146"><span class="hs-identifier hs-var">pieceType</span></a></span><span>
+</span><span id="line-196"></span><span>
+</span><span id="line-197"></span><span class="hs-comment">-- | When a moving piece has finished falling, this function transforms it into colored square cells in the grid.</span><span>
+</span><span id="line-198"></span><span class="annot"><a href="Pieces.html#solidifyPiece"><span class="hs-identifier hs-type">solidifyPiece</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-199"></span><span>  </span><span class="hs-comment">-- | The grid to update</span><span>
+</span><span id="line-200"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-type">PieceGrid</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-201"></span><span>  </span><span class="hs-comment">-- | The moving piece to solidify</span><span>
+</span><span id="line-202"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-203"></span><span>  </span><span class="hs-comment">-- | The updated grid</span><span>
+</span><span id="line-204"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-type">PieceGrid</span></a></span><span>
+</span><span id="line-205"></span><span id="solidifyPiece"><span class="annot"><span class="annottext">solidifyPiece :: PieceGrid -&gt; MovingPiece -&gt; PieceGrid
+</span><a href="Pieces.html#solidifyPiece"><span class="hs-identifier hs-var hs-var">solidifyPiece</span></a></span></span><span> </span><span id="local-6989586621679057137"><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057137"><span class="hs-identifier hs-var">grid</span></a></span></span><span> </span><span id="local-6989586621679057136"><span class="annot"><span class="annottext">movingPiece :: MovingPiece
+</span><a href="#local-6989586621679057136"><span class="hs-identifier hs-var">movingPiece</span></a></span></span><span class="hs-glyph">@</span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-special">{</span><span id="local-6989586621679057135"><span class="annot"><span class="annottext">PieceType
+pieceType :: PieceType
+pieceType :: MovingPiece -&gt; PieceType
+</span><a href="#local-6989586621679057135"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span></span><span class="hs-special">}</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PieceGrid -&gt; [(IntCoord, Maybe PieceType)] -&gt; PieceGrid
+forall a. Grid a -&gt; [(IntCoord, a)] -&gt; Grid a
+</span><a href="Grid.html#update"><span class="hs-identifier hs-var">update</span></a></span><span> </span><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057137"><span class="hs-identifier hs-var">grid</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057134"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057133"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">PieceType -&gt; Maybe PieceType
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057135"><span class="hs-identifier hs-var">pieceType</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679057134"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057134"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679057133"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057133"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-var">pieceAbsCoords</span></a></span><span> </span><span class="annot"><span class="annottext">MovingPiece
+</span><a href="#local-6989586621679057136"><span class="hs-identifier hs-var">movingPiece</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-206"></span><span>
+</span><span id="line-207"></span><span class="hs-comment">-- | Returns the grid cells on which the moving piece must be shown.</span><span>
+</span><span id="line-208"></span><span class="annot"><a href="Pieces.html#selfRepr"><span class="hs-identifier hs-type">selfRepr</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-209"></span><span>  </span><span class="hs-comment">-- | The current moving piece</span><span>
+</span><span id="line-210"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-211"></span><span>  </span><span class="hs-comment">-- | List of grid coordinates on which to show the piece</span><span>
+</span><span id="line-212"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-213"></span><span id="selfRepr"><span class="annot"><span class="annottext">selfRepr :: MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#selfRepr"><span class="hs-identifier hs-var hs-var">selfRepr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(IntCoord -&gt; Bool) -&gt; [IntCoord] -&gt; [IntCoord]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="annot"><span class="annottext">IntCoord -&gt; Bool
+</span><a href="Game.html#isInTotalGrid"><span class="hs-identifier hs-var">isInTotalGrid</span></a></span><span> </span><span class="annot"><span class="annottext">([IntCoord] -&gt; [IntCoord])
+-&gt; (MovingPiece -&gt; [IntCoord]) -&gt; MovingPiece -&gt; [IntCoord]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-var">pieceAbsCoords</span></a></span><span>
+</span><span id="line-214"></span><span>
+</span><span id="line-215"></span><span class="hs-comment">-- | Returns the grid cells on which the &quot;ghost&quot; (i.e. the ground projection) of the moving piece must be shown.</span><span>
+</span><span id="line-216"></span><span class="annot"><a href="Pieces.html#ghostRepr"><span class="hs-identifier hs-type">ghostRepr</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-217"></span><span>  </span><span class="hs-comment">-- | The grid</span><span>
+</span><span id="line-218"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceGrid"><span class="hs-identifier hs-type">PieceGrid</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-219"></span><span>  </span><span class="hs-comment">-- | The current moving piece</span><span>
+</span><span id="line-220"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-221"></span><span>  </span><span class="hs-comment">-- | List of grid coordinates on which to show the piece &quot;ghost&quot;</span><span>
+</span><span id="line-222"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="Coords.html#IntCoord"><span class="hs-identifier hs-type">IntCoord</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-223"></span><span id="ghostRepr"><span class="annot"><span class="annottext">ghostRepr :: PieceGrid -&gt; MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#ghostRepr"><span class="hs-identifier hs-var hs-var">ghostRepr</span></a></span></span><span> </span><span id="local-6989586621679057132"><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057132"><span class="hs-identifier hs-var">grid</span></a></span></span><span> </span><span id="local-6989586621679057131"><span class="annot"><span class="annottext">MovingPiece
+</span><a href="#local-6989586621679057131"><span class="hs-identifier hs-var">movingPiece</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(IntCoord -&gt; Bool) -&gt; [IntCoord] -&gt; [IntCoord]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">filter</span></span><span> </span><span class="annot"><span class="annottext">IntCoord -&gt; Bool
+</span><a href="Game.html#isInTotalGrid"><span class="hs-identifier hs-var">isInTotalGrid</span></a></span><span> </span><span class="annot"><span class="annottext">([IntCoord] -&gt; [IntCoord]) -&gt; [IntCoord] -&gt; [IntCoord]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[IntCoord]
+-&gt; (MovingPiece -&gt; [IntCoord]) -&gt; Maybe MovingPiece -&gt; [IntCoord]
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">MovingPiece -&gt; [IntCoord]
+</span><a href="Pieces.html#pieceAbsCoords"><span class="hs-identifier hs-var">pieceAbsCoords</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe MovingPiece -&gt; [IntCoord])
+-&gt; Maybe MovingPiece -&gt; [IntCoord]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">PieceGrid -&gt; MovingPiece -&gt; MoveType -&gt; Maybe MovingPiece
+</span><a href="Pieces.html#applyMove"><span class="hs-identifier hs-var">applyMove</span></a></span><span> </span><span class="annot"><span class="annottext">PieceGrid
+</span><a href="#local-6989586621679057132"><span class="hs-identifier hs-var">grid</span></a></span><span> </span><span class="annot"><span class="annottext">MovingPiece
+</span><a href="#local-6989586621679057131"><span class="hs-identifier hs-var">movingPiece</span></a></span><span> </span><span class="annot"><span class="annottext">MoveType
+</span><a href="Game.html#FullDrop"><span class="hs-identifier hs-var">FullDrop</span></a></span><span>
+</span><span id="line-224"></span><span>
+</span><span id="line-225"></span><span class="hs-comment">-- | Creates a new moving piece using the specified type.</span><span>
+</span><span id="line-226"></span><span class="annot"><a href="Pieces.html#spawnPiece"><span class="hs-identifier hs-type">spawnPiece</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-227"></span><span>  </span><span class="hs-comment">-- | Type of tetromino to spawn</span><span>
+</span><span id="line-228"></span><span>  </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-229"></span><span>  </span><span class="hs-comment">-- | The resulting moving piece</span><span>
+</span><span id="line-230"></span><span>  </span><span class="annot"><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span>
+</span><span id="line-231"></span><span id="spawnPiece"><span class="annot"><span class="annottext">spawnPiece :: PieceType -&gt; MovingPiece
+</span><a href="Pieces.html#spawnPiece"><span class="hs-identifier hs-var hs-var">spawnPiece</span></a></span></span><span> </span><span id="local-6989586621679057129"><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057129"><span class="hs-identifier hs-var">pieceType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MovingPiece :: PieceType -&gt; Orientation -&gt; RatCoord -&gt; MovingPiece
+</span><a href="Pieces.html#MovingPiece"><span class="hs-identifier hs-type">MovingPiece</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><span class="annottext">PieceType
+pieceType :: PieceType
+pieceType :: PieceType
+</span><a href="#local-6989586621679057129"><span class="hs-identifier hs-var hs-var">pieceType</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">orientation :: Orientation
+</span><a href="Pieces.html#orientation"><span class="hs-identifier hs-var">orientation</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Orientation
+</span><a href="Pieces.html#S0"><span class="hs-identifier hs-var">S0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">RatCoord
+center :: RatCoord
+center :: RatCoord
+</span><a href="#local-6989586621679057128"><span class="hs-identifier hs-var hs-var">center</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-232"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-233"></span><span>    </span><span id="local-6989586621679057128"><span class="annot"><span class="annottext">center :: RatCoord
+</span><a href="#local-6989586621679057128"><span class="hs-identifier hs-var hs-var">center</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="#local-6989586621679057129"><span class="hs-identifier hs-var">pieceType</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-234"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#I"><span class="hs-identifier hs-var">I</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Integer
+forall a. Integral a =&gt; a -&gt; Integer
+</span><span class="hs-identifier hs-var">toInteger</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Ratio Integer
+forall a. Real a =&gt; a -&gt; Ratio Integer
+</span><span class="hs-identifier hs-var">toRational</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var">playableRowNb</span></a></span><span> </span><span class="annot"><span class="annottext">Ratio Integer -&gt; Ratio Integer -&gt; Ratio Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-235"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#O"><span class="hs-identifier hs-var">O</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Integer
+forall a. Integral a =&gt; a -&gt; Integer
+</span><span class="hs-identifier hs-var">toInteger</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Ratio Integer
+forall a. Real a =&gt; a -&gt; Ratio Integer
+</span><span class="hs-identifier hs-var">toRational</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var">playableRowNb</span></a></span><span> </span><span class="annot"><span class="annottext">Ratio Integer -&gt; Ratio Integer -&gt; Ratio Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-236"></span><span>      </span><span class="annot"><span class="annottext">PieceType
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Integer
+forall a. Integral a =&gt; a -&gt; Integer
+</span><span class="hs-identifier hs-var">toInteger</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#colNb"><span class="hs-identifier hs-var">colNb</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Ratio Integer
+forall a. Integral a =&gt; a -&gt; a -&gt; Ratio a
+</span><span class="hs-operator hs-var">%</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ratio Integer -&gt; Ratio Integer -&gt; Ratio Integer
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Ratio Integer
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Ratio Integer
+forall a. Real a =&gt; a -&gt; Ratio Integer
+</span><span class="hs-identifier hs-var">toRational</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Game.html#playableRowNb"><span class="hs-identifier hs-var">playableRowNb</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-237"></span><span>
+</span><span id="line-238"></span><span class="hs-comment">-- | Returns a different piece type for each integer in range [0..6].</span><span>
+</span><span id="line-239"></span><span class="annot"><a href="Pieces.html#pieceTypeFromIndex"><span class="hs-identifier hs-type">pieceTypeFromIndex</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span>
+</span><span id="line-240"></span><span id="pieceTypeFromIndex"><span class="annot"><span class="annottext">pieceTypeFromIndex :: Int -&gt; PieceType
+</span><a href="Pieces.html#pieceTypeFromIndex"><span class="hs-identifier hs-var hs-var">pieceTypeFromIndex</span></a></span></span><span> </span><span id="local-6989586621679057125"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057125"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679057125"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-241"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#I"><span class="hs-identifier hs-var">I</span></a></span><span>
+</span><span id="line-242"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#J"><span class="hs-identifier hs-var">J</span></a></span><span>
+</span><span id="line-243"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#L"><span class="hs-identifier hs-var">L</span></a></span><span>
+</span><span id="line-244"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#O"><span class="hs-identifier hs-var">O</span></a></span><span>
+</span><span id="line-245"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">4</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#S"><span class="hs-identifier hs-var">S</span></a></span><span>
+</span><span id="line-246"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#T"><span class="hs-identifier hs-var">T</span></a></span><span>
+</span><span id="line-247"></span><span>  </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PieceType
+</span><a href="Pieces.html#Z"><span class="hs-identifier hs-var">Z</span></a></span><span>
+</span><span id="line-248"></span><span>
+</span><span id="line-249"></span><span class="hs-comment">-- | Generates a list of piece types where each type appears only one (but in a random order).</span><span>
+</span><span id="line-250"></span><span class="annot"><a href="Pieces.html#generatePieceBag"><span class="hs-identifier hs-type">generatePieceBag</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Pieces.html#PieceType"><span class="hs-identifier hs-type">PieceType</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-251"></span><span id="generatePieceBag"><span class="annot"><span class="annottext">generatePieceBag :: IO [PieceType]
+</span><a href="Pieces.html#generatePieceBag"><span class="hs-identifier hs-var hs-var">generatePieceBag</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-252"></span><span>  </span><span id="local-6989586621679057124"><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679057124"><span class="hs-identifier hs-var">indices</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; IO [Int]
+forall (m :: * -&gt; *) a. MonadRandom m =&gt; [a] -&gt; m [a]
+</span><span class="hs-identifier hs-var">shuffleM</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">6</span></span><span class="hs-special">]</span><span>
+</span><span id="line-253"></span><span>  </span><span class="annot"><span class="annottext">[PieceType] -&gt; IO [PieceType]
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">([PieceType] -&gt; IO [PieceType]) -&gt; [PieceType] -&gt; IO [PieceType]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; PieceType) -&gt; [Int] -&gt; [PieceType]
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; PieceType
+</span><a href="Pieces.html#pieceTypeFromIndex"><span class="hs-identifier hs-var">pieceTypeFromIndex</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679057124"><span class="hs-identifier hs-var">indices</span></a></span><span>
+</span><span id="line-254"></span></pre></body></html>
