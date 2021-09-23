@@ -2,7 +2,7 @@
 
 -- |
 -- Module : Render
--- Description : Rendering functions for TETRIS
+-- Description : Rendering functions for Tetris
 -- Copyright : (c) Thomas BAGREL @ TWEAG, 2021
 -- License : AGPL-3.0
 -- Maintainer : Thomas BAGREL <thomas.bagrel@tweag.io>
@@ -72,7 +72,7 @@ borderColor = black
 
 -- | Color in which to render full rows, just before they are deleted.
 fullRowColor :: Color
-fullRowColor = makeColorI 219 193 195 255
+fullRowColor = makeColorI 100 100 100 255
 
 -- | Background color of the window.
 backgroundColor :: Color

@@ -2,7 +2,7 @@
 
 -- |
 -- Module : Pieces
--- Description : Type and functions related to TETRIS pieces (Tetrominos)
+-- Description : Type and functions related to Tetris pieces (Tetrominos)
 -- Copyright : (c) Thomas BAGREL @ TWEAG, 2021
 -- License : AGPL-3.0
 -- Maintainer : Thomas BAGREL <thomas.bagrel@tweag.io>
@@ -59,7 +59,7 @@ import Utils
 -- | Type alias for a grid in which each cell can contain a colored square or be empty.
 type PieceGrid = Grid (Maybe PieceType)
 
--- | Represents the four orientations a piece can take in TETRIS
+-- | Represents the four orientations a piece can take in Tetris
 data Orientation
   = -- | Initial state, horizontal (for most pieces)
     S0
